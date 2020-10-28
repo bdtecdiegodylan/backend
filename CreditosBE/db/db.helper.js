@@ -1,22 +1,33 @@
-const Pool = require('pg').Pool
+const mysql = require("mysql");
 
 let DataBaseHelper = (function() {
 
     let instance
-    let pool = null
+    let connection = null
     let result = null
 
     function init() { //private function to create methods and properties
         console.log('DataBaseHelper Init')
 
-          pool = new Pool({
+          connection = mysql.createConnection({
               host: 'database-1.c5oq4teyxyp2.us-east-2.rds.amazonaws.com',
               database: 'database-1',
               user: 'admin',
               password: 'admin123',
               port: 1433,
-              max: 25 // max number of clients in the pool
-          })
+              
+          });
+
+          connection.connect(function(error){
+            if(error){
+               throw error;
+            }else{
+               console.log('Conexion correcta.');
+            }
+         });
+
+
+
      
         /**
          * User for Select insert, delete and updates in data base
@@ -24,13 +35,13 @@ let DataBaseHelper = (function() {
          */
         let query = async(sql) => {
             try {
-                await pool.query('BEGIN')
-                let queryResult = await pool.query(`${sql} RETURNING`)
+                await connection.query('BEGIN')
+                let queryResult = await connection.query(`${sql} RETURNING`)
                 result = queryResult.rows[0]
-                await pool.query('COMMIT')
+                await connection.query('COMMIT')
 
             } catch (e) {
-                await pool.query('ROLLBACK')
+                await connection.query('ROLLBACK')
                 throw e
             }
 
@@ -42,11 +53,11 @@ let DataBaseHelper = (function() {
          */
         let select = async(sql) => {
             try {
-                await pool.query('BEGIN')
-                result = await pool.query(sql)
-                await pool.query('COMMIT')
+                await connection.query('BEGIN')
+                result = await connection.query(sql)
+                await connection.query('COMMIT')
             } catch (e) {
-                await pool.query('ROLLBACK')
+                await connection.query('ROLLBACK')
                 throw e
             }
 
